@@ -10,111 +10,138 @@ def load_model():
         return joblib.load("intent_model.pkl")
     except:
         return None
+
 model = load_model()
 
-# --- CSS ---
 st.markdown("""
 <style>
 [data-testid="stSidebar"] { background-color: #0A0F1C; }
-.main { background-color: #F8FAFC; }
+.stApp { background-color: #0B1220; }
+
+[data-testid="stTextInput"] input {
+    background-color: #FFFFFF!important;
+    color: #0F172A!important;
+    border-radius: 12px!important;
+    height: 52px!important;
+    border: 1px solid #E2E8F0!important;
+}
+
+div[data-testid="stButton"] > button[kind="primary"] {
+    background: linear-gradient(90deg, #2563EB 0%, #3B82F6 100%)!important;
+    color: white!important;
+    border: none!important;
+    border-radius: 12px!important;
+    height: 48px!important;
+    font-weight: 600!important;
+}
+div[data-testid="stButton"] > button[kind="secondary"] {
+    border-radius: 12px!important;
+    height: 48px!important;
+}
+
 .card-top {
-    background: white; padding: 25px; border-radius: 16px;
-    border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background: #151E32;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #1E293B;
 }
 .result-card {
-    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 40%, #60A5FA 100%);
-    padding: 28px; border-radius: 18px; color: white;
+    background: linear-gradient(135deg, #2563EB 0%, #3B82F6 50%, #60A5FA 100%);
+    padding: 28px;
+    border-radius: 20px;
+    color: white;
 }
-.small-badge { background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; font-size: 12px; }
-.info-box { background: rgba(255,255,255,0.15); padding: 12px 16px; border-radius: 10px; backdrop-filter: blur(10px); }
+.badge {
+    background: rgba(255,255,255,0.2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+.info-box {
+    background: rgba(255,255,255,0.15);
+    padding: 12px 16px;
+    border-radius: 12px;
+}
 </style>
 """, unsafe_allow_html=True)
 
-# --- SIDEBAR ---
+# SIDEBAR
 with st.sidebar:
     st.markdown("### 🛡️ FinGuard AI")
     st.caption("Banking AI Platform")
-    st.write("")
+    st.markdown("---")
     st.markdown("**BANK ADMIN**")
-    st.metric("94.2%", "Accuracy", delta="+1.2%")
-    st.metric("5", "Core intents", delta="Active")
-    st.metric("42ms", "Latency", delta="Real-time")
-    st.divider()
-    st.markdown("**📊 Dashboard**")
-    st.markdown("✨ Intents")
-    st.markdown("📈 Analytics")
-    st.markdown("👥 Customers")
-    st.markdown("🛡️ Security")
-    st.divider()
-    st.markdown("**BA** Admin User\n\nadmin@finguard.ai")
+    c1, c2 = st.columns(2)
+    c1.metric("94.2%", "Accuracy", "+1.2%")
+    c2.metric("5", "Core intents")
+    st.metric("42ms", "Latency", "Real-time")
+    st.markdown("---")
+    st.markdown("**📊 Dashboard** \n✨ Intents \n📈 Analytics \n👥 Customers \n🛡️ Security")
+    st.markdown("---")
+    st.markdown("**BA Admin User** \nadmin@finguard.ai")
 
-# --- MAIN HEADER ---
-h1, h2 = st.columns([6, 2])
-with h1:
-    st.markdown("## Enterprise Banking Intent Intelligence")
+# HEADER
+col1, col2 = st.columns([4,1])
+with col1:
+    st.markdown("# Enterprise Banking Intent Intelligence")
     st.caption("Real-time AI-powered intent detection and analysis for enterprise banking support")
-with h2:
-    st.button("➕ New Query", type="primary")
+with col2:
+    st.write("")
+    st.button("➕ New Query", type="primary", use_container_width=True)
 
-st.write("")
-
-# --- TOP CARD ---
+# TOP CARD
 st.markdown('<div class="card-top">', unsafe_allow_html=True)
-c1, c2 = st.columns([1.2, 1])
-with c1:
+left, right = st.columns([1.3, 1])
+with left:
     st.markdown("#### ✨ Enterprise Banking Intent Intelligence")
-    st.write("Monitor, analyze, and respond to customer intents automatically using FinGuard AI's foundation model. Get instant insights, confidence scores, and recommended actions.")
-with c2:
+    st.markdown("<p style='color:#94A3B8; font-size:14px'>Monitor, analyze, and respond to customer intents automatically using FinGuard AI's foundation model. Get instant insights, confidence scores, and recommended actions.</p>", unsafe_allow_html=True)
+with right:
     st.markdown("**Customer Query Analysis**")
-    query = st.text_input("query_input", placeholder="Enter customer query...", label_visibility="collapsed")
+    query = st.text_input("q", placeholder="Why was I charged for cash withdrawal?", label_visibility="collapsed", key="q_input")
     analyze = st.button("Analyze ✨", type="primary", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("")
 
-# --- RESULT CARD LOGIC ---
-if 'analyze' in locals() and analyze and query:
+# RESULT
+if analyze and query.strip()!= "":
     with st.spinner("Analyzing..."):
         time.sleep(0.6)
         if model:
             pred = model.predict([query])[0]
-            proba = max(model.predict_proba([query])[0]) * 100
+            prob = max(model.predict_proba([query])[0]) * 100
         else:
-            pred = "card_not_working"
-            proba = 92.0
+            pred = "cash_withdrawal_charge"
+            prob = 87.0
 
-    # Map for display
-    category = "Payments & Cards" if "card" in pred else "Charges & Fees"
-    action_text = "Issue replacement card and notify customer via SMS/Email. Review recent transactions for fraud." if "card" in pred else "Review charge policy, verify transaction and initiate fee waiver if applicable."
+    cat = "Charges & Fees" if "cash" in pred or "charge" in pred else "Payments & Cards"
+    if "card_not_working" in pred:
+        cat = "Payments & Cards"
+        action = "Issue replacement card and notify customer via SMS/Email. Review recent transactions for fraud."
+    elif "cash" in pred:
+        action = "Review charge policy, verify transaction and initiate fee waiver if applicable."
+    else:
+        action = f"Auto-route to {pred.replace('_',' ').title()} department and create support ticket."
 
     st.markdown(f"""
     <div class="result-card">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-            <span class="small-badge">💠 Intent Detected</span>
-            <span class="small-badge">Confidence {proba:.0f}%</span>
+        <div style="display:flex; justify-content:space-between">
+            <span class="badge">Intent Detected</span>
+            <span class="badge">Confidence {int(prob)}%</span>
         </div>
-        <h1 style="margin:15px 0;">{pred.replace('_',' ').title()}</h1>
-        <div style="display:flex; gap:12px; margin:15px 0;">
-            <div class="info-box" style="flex:1">📄 Category:<br><b>{category}</b></div>
-            <div class="info-box" style="flex:1; background:#FBBF24; color:#000">⚠️ Severity:<br><b>Medium</b></div>
-            <div class="info-box" style="flex:1">🕒 Detected:<br><b>0.8s ago</b></div>
+        <h1 style="margin:18px 0;">{pred.replace('_',' ').title()}</h1>
+        <div style="display:flex; gap:12px; margin-bottom:16px">
+            <div class="info-box" style="flex:1">📄 Category:<br><b>{cat}</b></div>
+            <div class="info-box" style="flex:1; background:#FDE68A; color:#000">⚠️ Severity:<br><b>Medium</b></div>
+            <div class="info-box" style="flex:1">⏱️ Detected:<br><b>0.8s ago</b></div>
         </div>
-        <p><b>Recommended Action</b><br>{action_text}</p>
-        <div style="background:rgba(255,255,255,0.3); height:6px; border-radius:10px; margin-top:20px;">
-            <div style="background:white; height:6px; width:{int(proba)}%; border-radius:10px;"></div>
+        <p style="margin:0"><b>Recommended Action</b><br>{action}</p>
+        <div style="background:rgba(255,255,255,0.3); height:6px; border-radius:10px; margin-top:22px">
+            <div style="background:white; width:{int(prob)}%; height:6px; border-radius:10px"></div>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:13px;">
-            <span>Confidence {int(proba)}/100</span>
+        <div style="display:flex; justify-content:space-between; font-size:12px; margin-top:8px">
+            <span>Confidence {int(prob)}/100</span>
             <span>High confidence • Auto-action suggested</span>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-else:
-    st.markdown("""
-    <div class="result-card" style="opacity:0.9">
-        <span class="small-badge">💠 Intent Detected</span>
-        <h1 style="margin:15px 0;">Card Not Working</h1>
-        <p>Enter a query above and click Analyze to see live detection...</p>
     </div>
     """, unsafe_allow_html=True)
